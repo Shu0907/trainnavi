@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Train Navi Overlay</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="panel">
+
+  <div class="left">
+    <div class="type" id="typeDisplay">各停</div>
+    <button onclick="changeType()">種別</button>
+  </div>
+
+  <div class="center">
+    <div class="next" id="nextStation">次駅：---</div>
+    <select id="routeSelect" onchange="selectRoute()"></select>
+    <button onclick="nextStation()">次駅へ</button>
+  </div>
+
+  <div class="right">
+    列番：<input id="trainNo" value="4601A"><br><br>
+    両数：<input id="cars" value="8">両<br><br>
+    速度：<span id="speedVal">0</span>km/h<br>
+    <input type="range" min="0" max="130"
+      oninput="speedVal.textContent=this.value">
+  </div>
+
+</div>
+
+<script>
+let types = ["各停","快速","急行","特急"];
+let typeIndex = 0;
+let routes = {};
+let currentRouteName = "";
+let stationIndex = 0;
+
+async function loadRoutes(){
+  const res = await fetch("routes.json");
+  routes = await res.json();
+  for (let name in routes){
+    let opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    routeSelect.appendChild(opt);
+  }
+  selectRoute();
+}
+
+function changeType(){
+  typeIndex = (typeIndex + 1) % types.length;
+  typeDisplay.textContent = types[typeIndex];
+  stationIndex = 0;
+  updateNextStation();
+}
+
+function selectRoute(){
+  currentRouteName = routeSelect.value;
+  stationIndex = 0;
+  updateNextStation();
+}
+
+function nextStation(){
+  const stations = getStations();
+  stationIndex = (stationIndex + 1) % stations.length;
+  updateNextStation();
+}
+
+function getStations(){
+  const type = types[typeIndex];
+  if (routes[currentRouteName][type])
+    return routes[currentRouteName][type];
+  return routes[currentRouteName]["各停"];
+}
+
+function updateNextStation(){
+  document.getElementById("nextStation").textContent =
+    "次駅：" + getStations()[stationIndex];
+}
+
+loadRoutes();
+</script>
+</body>
+</html>
